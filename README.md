@@ -22,3 +22,8 @@ Sensors to use: GPS, bluetooth, accelerometer, (web crawler?)
 - Directions leading student to class location
 - Determine whether student has exam time conflicts
 - Notifications and directions displayed on the pebble watch
+
+--------------------------------------------------------------------------------------
+
+**Feedback:**
+- Make sure to center in on a few highly do-able and unique app possibilities
