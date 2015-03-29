@@ -1,7 +1,7 @@
 # HokieHelper
 CS 3714 Group Project
 
-*Project Proposal:*
+**Project Proposal:**
 
 We plan on creating an application that allows Virginia Tech students to enter their PID & password into our app, which will then allow our app to access the students class information. The class information will be able to automatically organize the student’s schedule, and notify the student of any exam time conflicts (3 exams within 24 hours or 2 during the same time).
 
@@ -12,13 +12,13 @@ The app will push notifications to the pebble, so the student will not have to l
 Design for: Android / pebble 
 Sensors to use: GPS, bluetooth, accelerometer, (web crawler?)
 
-*Client:*
-Name: Sumit Kumar (one of CPEs)	
-Email: timus@vt.edu
+**Client:**
+- Name: Sumit Kumar (one of CPEs)	
+- Email: timus@vt.edu
 
-*List of Deliverables:*
-Android application communicating with VT servers to access student information
-Notifications reminding students when to leave for class
-Directions leading student to class location
-Determine whether student has exam time conflicts
-Notifications and directions displayed on the pebble watch
+**List of Deliverables:**
+- Android application communicating with VT servers to access student information
+- Notifications reminding students when to leave for class
+- Directions leading student to class location
+- Determine whether student has exam time conflicts
+- Notifications and directions displayed on the pebble watch
