@@ -25,3 +25,11 @@ proguard/
 
 # Log Files
 *.log
+
+# Gradle settings
+**/.idea/gradle.xml
+**/.idea/workspace.xml
+**/.idea/tasks.xml
+
+# module files
+**/.idea/libraries/*
