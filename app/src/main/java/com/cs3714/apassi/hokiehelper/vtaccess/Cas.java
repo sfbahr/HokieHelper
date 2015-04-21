@@ -198,7 +198,11 @@ public class Cas {
 
                     Element checkedEl = checkEls.get(8);
 
-                    if (checkedEl.text().equals("Invalid username or password.")) {
+                    String message = checkedEl.text();
+
+                    if (message.equals("Invalid username or password.")
+                            || message.contains("Password is required.")
+                            || message.contains("Username is required.")) {
 
                         // if unsuccessful login throw WrongLoginException
                         throw new WrongLoginException();
@@ -223,7 +227,11 @@ public class Cas {
 
                     Element checkedEl = checkEls.get(0);
 
-                    if (checkedEl.text().equals("Invalid username or password.")) {
+                    String message = checkedEl.text();
+
+                    if (message.equals("Invalid username or password.")
+                        || message.contains("Password is required.")
+                        || message.contains("Username is required.")) {
 
                         // if unsuccessful login throw WrongLoginException
                         throw new WrongLoginException();
