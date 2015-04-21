@@ -54,7 +54,7 @@ public class LogInActivity extends ActionBarActivity {
 //                        Uri.parse("http://maps.google.com/maps?saddr=37.2286,-80.41629&daddr=37.221606,-80.423771"));
 //                startActivityForResult(intent, REQUEST_CODE);
 
-                Intent intent = new Intent(LogInActivity.this , MapActivity.class);
+                Intent intent = new Intent(LogInActivity.this , ClassActivity.class);
                 startActivity(intent);
             }
         });
