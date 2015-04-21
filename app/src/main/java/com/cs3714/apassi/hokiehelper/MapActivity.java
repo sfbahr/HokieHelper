@@ -5,6 +5,7 @@ import android.os.StrictMode;
 import android.provider.DocumentsContract;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
+import android.widget.TextView;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -58,6 +59,15 @@ public class MapActivity extends FragmentActivity {
         for(int i = 0 ; i < directionPoint.size() ; i++) {
             rectLine.add(directionPoint.get(i));
         }
+
+        ArrayList<String> list = md.getDirections(doc);
+
+        TextView tv = (TextView) findViewById(R.id.textview);
+        StringBuilder build = new StringBuilder();
+        for (int i = 0; i < list.size(); i++)
+            build.append(list.get(i) + "\n");
+
+        tv.setText(build.toString());
 
         mMap.addPolyline(rectLine);
     }

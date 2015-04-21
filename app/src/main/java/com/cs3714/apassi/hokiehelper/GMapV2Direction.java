@@ -14,6 +14,7 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.HttpContext;
 import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
@@ -106,6 +107,22 @@ public class GMapV2Direction {
         Node node1 = nl1.item(0);
         Log.i("CopyRights", node1.getTextContent());
         return node1.getTextContent();
+    }
+
+    public ArrayList<String> getDirections(Document doc) {
+        ArrayList<String> list = new ArrayList<String>();
+        NodeList nList = doc.getElementsByTagName("html_instructions");
+
+        for (int i = 0; i < nList.getLength(); i++) {
+
+            Node locationNode = nList.item(i);
+            String str = locationNode.getTextContent();
+            str = str.replaceAll("<([a-z]|[=]|[0-9]|[:]|[.]|[\"]*)>", "");
+            str = str.replaceAll("</([a-z]|[=]|[0-9]|[:]|[.]|[\"]*)>", "");
+            list.add(str);
+        }
+
+        return list;
     }
 
     public ArrayList<LatLng> getDirection (Document doc) {
