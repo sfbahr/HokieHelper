@@ -56,7 +56,7 @@ public class LogInActivity extends ActionBarActivity {
         super.onActivityResult(requestCode, resultCode, data);
     }
 
-    public void onClickLogin(View view) throws WrongLoginException {
+    public void onClickLogin(View view) {
         new LoginTask().execute(pidText.getText().toString(),
                 passwordText.getText().toString(),
                 new File(getCacheDir(), "ssl").toString());
