@@ -9,6 +9,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.ListView;
 
 import java.util.ArrayList;
@@ -22,6 +23,8 @@ public class ClassActivity extends ActionBarActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_class);
+
+        setUpExamsButton();
 
         classes = new ArrayList<VTClass>();
 
@@ -46,6 +49,17 @@ public class ClassActivity extends ActionBarActivity {
                 Intent intent = new Intent(ClassActivity.this, MapActivity.class);
                 intent.putExtra("lat", classes.get(position).getCoordinates().latitude);
                 intent.putExtra("lon", classes.get(position).getCoordinates().longitude);
+                startActivity(intent);
+            }
+        });
+    }
+
+    private void setUpExamsButton() {
+        Button button  = (Button) findViewById(R.id.examsButton);
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(ClassActivity.this, ExamsActivity.class);
                 startActivity(intent);
             }
         });
