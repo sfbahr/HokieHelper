@@ -45,6 +45,10 @@
             android:name=".ClassActivity"
             android:label="@string/title_activity_class" >
         </activity>
+        <activity
+            android:name=".ExamsActivity"
+            android:label="@string/title_activity_exams" >
+        </activity>
     </application>
 
 </manifest>
