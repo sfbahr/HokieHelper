@@ -1,6 +1,13 @@
 package com.cs3714.apassi.hokiehelper;
 
+import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.Intent;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
+import android.net.Uri;
+import android.os.AsyncTask;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.view.Menu;
@@ -11,20 +18,33 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
 
+import com.google.android.gms.maps.model.LatLng;
+
+import org.w3c.dom.Document;
+
 import java.util.ArrayList;
 
 
-public class ExamsActivity extends ActionBarActivity {
+public class ExamsActivity extends ActionBarActivity implements LocationListener {
 
     private ArrayList<Exam> exams;
+
+    LocationManager locationManager;
+    String locationProvider = LocationManager.NETWORK_PROVIDER;
+    private double curLat, curLong = 0;
+    private ProgressDialog progress;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_exams);
 
         setUpClassButton();
-
         exams = new ArrayList<Exam>();
+
+        locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+        locationManager.requestLocationUpdates(locationProvider, 0, 0, this);
+
         populateExams();
 
         //String [] StringArray = new String[5];
@@ -43,10 +63,14 @@ public class ExamsActivity extends ActionBarActivity {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 
-                Intent intent = new Intent(ExamsActivity.this, MapActivity.class);
-                intent.putExtra("lat", exams.get(position).getCoordinates().latitude);
-                intent.putExtra("lon", exams.get(position).getCoordinates().longitude);
-                startActivity(intent);
+//                Intent intent = new Intent(ExamsActivity.this, MapActivity.class);
+//                intent.putExtra("lat", exams.get(position).getCoordinates().latitude);
+//                intent.putExtra("lon", exams.get(position).getCoordinates().longitude);
+//                startActivity(intent);
+
+                progress = ProgressDialog.show(ExamsActivity.this, "Loading Directions", "loading...", true);
+                LatLng start = new LatLng(curLat, curLong);
+                new NavigateTask().execute(start, exams.get(position).getCoordinates());
             }
         });
     }
@@ -57,8 +81,7 @@ public class ExamsActivity extends ActionBarActivity {
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(ExamsActivity.this, ClassActivity.class);
-                startActivity(intent);
+                finish();
             }
         });
     }
@@ -101,5 +124,68 @@ public class ExamsActivity extends ActionBarActivity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onProviderEnabled(String provider) {
+
+    }
+
+    @Override
+    public void onProviderDisabled(String provider) {
+
+    }
+
+    @Override
+    public void onLocationChanged(Location location) {
+        curLat = location.getLatitude();
+        curLong = location.getLongitude();
+        locationManager.removeUpdates(this);
+    }
+
+    @Override
+    public void onStatusChanged(String provider, int status, Bundle extras) {
+
+    }
+
+    private class NavigateTask extends AsyncTask<LatLng, Integer, ArrayList<String>> {
+
+        @Override
+        protected ArrayList<String> doInBackground(LatLng... params) {
+            try {
+                LatLng start = params[0];
+                LatLng dest = params[1];
+                GMapV2Direction md = new GMapV2Direction();
+                Document doc = md.getDocument(start, dest, GMapV2Direction.MODE_WALKING);
+
+                ArrayList<String> list = md.getDirections(doc);
+                list.add(0, String.valueOf(start.latitude));
+                list.add(1, String.valueOf(start.longitude));
+                list.add(2, String.valueOf(dest.latitude));
+                list.add(3, String.valueOf(dest.longitude));
+
+                return list;
+
+            } catch (Exception e) {
+                e.printStackTrace();
+                return null;
+            }
+        }
+
+        @Override
+        protected void onPostExecute(ArrayList<String> directions) {
+
+            String sLat = directions.get(0);
+            String sLon = directions.get(1);
+            String dLat = directions.get(2);
+            String dLon = directions.get(3);
+            progress.dismiss();
+
+            // Starting google maps intent
+            Intent intent = new Intent(android.content.Intent.ACTION_VIEW,
+                    Uri.parse("http://maps.google.com/maps?saddr=" + sLat + "," + sLon +
+                            "&daddr=" + dLat + "," + dLon));
+            startActivity(intent);
+        }
     }
 }
