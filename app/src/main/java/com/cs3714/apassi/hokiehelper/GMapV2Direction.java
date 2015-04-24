@@ -119,6 +119,8 @@ public class GMapV2Direction {
             String str = locationNode.getTextContent();
             str = str.replaceAll("<([a-z]|[=]|[0-9]|[:]|[.]|[\"]*)>", "");
             str = str.replaceAll("</([a-z]|[=]|[0-9]|[:]|[.]|[\"]*)>", "");
+            str = str.replaceAll("</div>", "");
+            str = str.replaceAll("<div.*>", "");
             list.add(str);
         }
 
