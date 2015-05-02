@@ -20,12 +20,18 @@ import android.widget.Button;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import com.cs3714.apassi.hokiehelper.vtaccess.schedule.Course;
 import com.google.android.gms.maps.model.LatLng;
 
 import org.w3c.dom.Document;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.util.ArrayList;
+import java.util.List;
 
 
 public class ClassActivity extends ActionBarActivity implements LocationListener{
@@ -47,10 +53,26 @@ public class ClassActivity extends ActionBarActivity implements LocationListener
         setUpExamsButton();
         classes = new ArrayList<VTClass>();
 
+        Intent intent = getIntent();
+        //ArrayList<Course> courses = (ArrayList<Course>) intent.getExtras().get("courses");
+
+        ArrayList<Course> courses = new ArrayList<Course>();
+        load(courses);
+
+        for (int i = 0; i < courses.size(); i++) {
+            Course course = courses.get(i);
+            VTClass c = new VTClass(course.getName(), course.getDays(),
+                    course.getBeginTime() + " " + course.getEndTime(), course.getBuilding(),
+                    LocationMap.buildings.get(course.getBuilding()));
+            classes.add(c);
+            //VTClass c = new VTClass("Mobile Dev", "T TR", "3:30pm - 4:45pm",
+            //        "SQUIR",LocationMap.buildings.get("SQUIR"));
+        }
+
         locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
         locationManager.requestLocationUpdates(locationProvider, 0, 0, this);
 
-        populateClasses();
+        //populateClasses();
 
         //String [] StringArray = new String[5];
         ArrayList<String> list = new ArrayList<String>();
@@ -72,6 +94,11 @@ public class ClassActivity extends ActionBarActivity implements LocationListener
 //                intent.putExtra("lat", classes.get(position).getCoordinates().latitude);
 //                intent.putExtra("lon", classes.get(position).getCoordinates().longitude);
 //                startActivity(intent);
+
+                if (classes.get(position).getCoordinates() == null) {
+                    Toast.makeText(ClassActivity.this, "Location not present", Toast.LENGTH_SHORT).show();
+                    return;
+                }
 
                 progress = ProgressDialog.show(ClassActivity.this, "Loading Directions", "loading...", true);
                 LatLng start = new LatLng(curLat, curLong);
@@ -151,6 +178,36 @@ public class ClassActivity extends ActionBarActivity implements LocationListener
     @Override
     public void onStatusChanged(String provider, int status, Bundle extras) {
 
+    }
+
+    /**
+     * Method loads in all the entries present in the
+     * "pwman.dat" file.
+     */
+    public void load(List<Course> courses){
+        File file = new File(getFilesDir(), LogInActivity.classFileName);
+
+        try {
+            FileInputStream inputFileStream = new FileInputStream(file);
+            ObjectInputStream inputObjectStream = new ObjectInputStream(inputFileStream);
+
+            Course course = (Course) inputObjectStream.readObject();
+            //System.out.println("Following are the expired entries in the database.");
+
+            while(course != null) {
+                courses.add(course);
+                course = (Course) inputObjectStream.readObject();
+            }
+
+            inputObjectStream.close();
+
+        } catch (FileNotFoundException e) {
+            //e.printStackTrace();
+        } catch (IOException e) {
+            //e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            //e.printStackTrace();
+        }
     }
 
     private class NavigateTask extends AsyncTask<LatLng, Integer, ArrayList<String>> {

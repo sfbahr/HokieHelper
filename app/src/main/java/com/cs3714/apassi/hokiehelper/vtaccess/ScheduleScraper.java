@@ -1,29 +1,25 @@
 package com.cs3714.apassi.hokiehelper.vtaccess;
 
-import android.util.Log;
-
-import com.cs3714.apassi.hokiehelper.schedule.Course;
-import com.cs3714.apassi.hokiehelper.schedule.Schedule;
-
-import org.jsoup.Connection;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.select.Elements;
-
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.List;
 import java.util.Map;
+import org.jsoup.Jsoup;
+import org.jsoup.Connection.Method;
+import org.jsoup.Connection.Response;
+import org.jsoup.nodes.Document;
+import org.jsoup.select.Elements;
+import com.cs3714.apassi.hokiehelper.vtaccess.exceptions.HokieSpaTimeoutException;
+import com.cs3714.apassi.hokiehelper.vtaccess.exceptions.WrongLoginException;
+import com.cs3714.apassi.hokiehelper.vtaccess.schedule.Course;
+import com.cs3714.apassi.hokiehelper.vtaccess.schedule.Schedule;
 
 /**
- * ScheduleScraper class that can be used to scrape the
+ * ScheduleScraper class that can be used to scrape the 
  * user currently logged into the CAS object's Schedule, and ExamSchedule,
- * from passed in scheduleCodes (yyyymm). The year then the month that the
+ * from passed in semesterCodes (yyyymm). The year then the month that the
  * user is concerned with.
- *
- * Note: The CAS object must have a user logged into it for any of the methods contained
- *          in here to work. They will return values indicating an error if there is not. (null)
  *
  * @author Ethan Gaebel (egaebel)
  *
@@ -31,7 +27,6 @@ import java.util.Map;
 public class ScheduleScraper {
 
     //~Constants--------------------------------------------
-    private static final String TAG = "SCHEDULE SCRAPER";
     /**
      * The URL for the page before the HOKIESPA constant's URL where the cookies are updated.
      */
@@ -91,16 +86,69 @@ public class ScheduleScraper {
      */
     private static final String BEFORE_EXAMNUM = "&EXAMNUM=";
 
+    //~Data Fields-----------------------------------------------------------
+    /**
+     * Instance of a Cas login session.
+     */
+    private Cas cas;
+
     //~Constructors--------------------------------------------
+    /**
+     * Takes an ACTIVE Cas object representing a Cas session.
+     *
+     * @throws HokieSpaTimeoutException thrown when an INACTIVE Cas object is passed, and the session cannot be recovered.
+     */
+    public ScheduleScraper(Cas newCas) throws HokieSpaTimeoutException {
+
+        cas = newCas;
+
+        if (!cas.isActive()) {
+
+            if (!cas.refreshSession()) {
+                throw new HokieSpaTimeoutException();
+            }
+        }
+    }
+
+    /**
+     * Constructs a ScheduleScraper object that can immediately be used to download 
+     * course Schedules and exam Schedules from HokieSpa.
+     *
+     * @param username the user's username for HokieSpa.
+     * @param password the user's password for HokieSpa.
+     *
+     * @throws WrongLoginException thrown if the username and/or password are incorrect.
+     */
+    public ScheduleScraper(char[] username, char[] password) throws WrongLoginException {
+
+        cas = new Cas(username, password);
+    }
+
+    /**
+     * Constructs a ScheduleScraper object that can immediately be used to download 
+     * course Schedules and exam Schedules from HokieSpa.
+     *
+     * @param username the user's username for HokieSpa.
+     * @param password the user's password for HokieSpa.
+     * @param filePath the path that the SSL certificate used to authenticate is saved to.
+     *          Sometimes it is necessary to put it somewhere special.
+     *
+     * @throws WrongLoginException thrown if the username and/or password are incorrect.
+     */
+    public ScheduleScraper(char[] username, char[] password, String filePath) throws WrongLoginException {
+
+        cas = new Cas(username, password, filePath);
+    }
 
     //~Methods--------------------------------------------
     /**
      * Tests a char to see if it is safe to convert into an int.
+     * This method will take 44.54 as safe, the . is included
      *
      * @param character the char to test.
      * @return true if the char is a number, false otherwise.
      */
-    private static boolean isNumber(char character) {
+    private boolean isNumber(char character) {
 
         boolean value;
 
@@ -110,7 +158,8 @@ public class ScheduleScraper {
                 || tester.contains("2") || tester.contains("3")
                 || tester.contains("4") || tester.contains("5")
                 || tester.contains("6") || tester.contains("7")
-                || tester.contains("8") || tester.contains("9")) {
+                || tester.contains("8") || tester.contains("9")
+                || tester.contains(".")) {
 
             value = true;
         }
@@ -128,33 +177,36 @@ public class ScheduleScraper {
      * @param schedule
      *            the Schedule object which will be filled from the web.
      * @param semesterCode
-     *            the numerical identifier of the semester, that is to be
-     *            implanted into the URL, along with the year. (ex. YYYYMM)
+     *            the numerical identifier of the semester, along with the year. (ex. YYYYMM)
      * @return true if the schedule retrieval succeeds, false if there was an error.
+     *
+     * @throws HokieSpaTimeoutException thrown if the login session to hokiespa has timed out
      */
-    public static boolean retrieveSchedule(Schedule schedule, String semesterCode) {
+    public boolean retrieveSchedule(Schedule schedule, String semesterCode) throws HokieSpaTimeoutException {
+
+        Map<String, String> cookies = cas.getCookies();
 
         //If the Cas object has cookies
-        if (Cas.isActive() && Cas.getCookies() != null && schedule != null) {
+        if (cas.isActive() && cookies != null && schedule != null && semesterCode != null) {
             try {
-
-                Map<String, String> cookies = Cas.getCookies();
 
                 if (cookies.get("IDMSESSID") != null) {
 
                     // to get the cookies that are updated with the click
-                    Connection.Response hokieResp = Jsoup
+                    Response hokieResp = Jsoup
                             .connect(HOKIESTOP + semesterCode + ENDOFURL)
-                            .cookies(cookies)
+                            .cookie("IDMSESSID", cookies.get("IDMSESSID"))
+                            .cookie("SESSID", cookies.get("SESSID"))
                             .userAgent(AGENTS)
-                            .method(Connection.Method.GET)
+                            .method(Method.GET)
                             .execute();
 
-                    cookies.putAll(hokieResp.cookies());
+                    cookies.put("SESSID", hokieResp.cookies().get("SESSID"));
 
                     // go to the detailed schedule page
-                    Document hokieDoc = Jsoup.connect(HOKIESPA + semesterCode + PRINT_FRIENDLY)
-                            .cookies(cookies)
+                    Document hokieDoc = Jsoup.connect(HOKIESPA + semesterCode)
+                            .cookie("IDMSESSID", cookies.get("IDMSESSID"))
+                            .cookie("SESSID", cookies.get("SESSID"))
                             .userAgent(AGENTS)
                             .referrer(HOKIESTOP + semesterCode + ENDOFURL)
                             .post();
@@ -164,12 +216,30 @@ public class ScheduleScraper {
 
                     Elements cols;
                     Course course;
-                    String tempCourseCode = "";
-                    String[] courseCodeParts = null;
+                    String tempCrn;
+                    String tempCourseCode;
+                    String[] courseCodeParts;
                     String[] timeString = new String[2];
                     String tempString;
                     String locationString = "";
                     String tempName = "";
+                    String tempDays = "";
+                    String tempCredits = "";
+
+                    //Throw HokieSpaTimeoutException if the session has timed out
+                    Elements timeoutCheck = hokieDoc.select("#login-form");
+                    if (timeoutCheck.size() > 0) {
+
+                        if (!cas.refreshSession())
+                            throw new HokieSpaTimeoutException();
+                    }
+
+                    //return false if there are no courses in the passed semester
+                    if ((rows.size() - 1) <= 2) {
+
+                        return false;
+                    }
+
                     for (int i = 2; i < (rows.size() - 1); i++) {
 
                         cols = rows.get(i).select("td");
@@ -182,13 +252,6 @@ public class ScheduleScraper {
 
                             // course name
                             course.setName(tempName);
-
-                            //ensure that course code was formatted properly
-                            if (courseCodeParts != null && courseCodeParts.length == 2) {
-
-                                course.setSubjectCode(courseCodeParts[0]);
-                                course.setCourseNumber(courseCodeParts[1]);
-                            }
 
                             // times
                             timeString[0] = cols.get(4).text();
@@ -236,9 +299,10 @@ public class ScheduleScraper {
                         // otherwise the row is normal, proceed
                         else {
 
-                            // course name
-                            tempName = cols.get(2).text();
-                            course.setName(tempName);
+
+                            //get crn
+                            tempCrn = cols.get(0).text();
+                            course.setCrn(tempCrn);
 
                             //get course code
                             tempCourseCode = cols.get(1).text();
@@ -250,6 +314,14 @@ public class ScheduleScraper {
                                 course.setSubjectCode(courseCodeParts[0]);
                                 course.setCourseNumber(courseCodeParts[1]);
                             }
+
+                            // course name
+                            tempName = cols.get(2).text();
+                            course.setName(tempName);
+
+                            //number of credits
+                            tempCredits = cols.get(4).text();
+                            course.setCredits((int) Double.parseDouble(tempCredits));
 
                             // times
                             timeString[0] = cols.get(5).text();
@@ -270,6 +342,11 @@ public class ScheduleScraper {
                                 course.setBeginTime("N/A");
                                 course.setEndTime("N/A");
                             }
+
+                            //Days of the week string (MWF)
+                            tempDays = cols.get(6).text();
+                            course.setDays(tempDays);
+
                             // Building and room number
                             tempString = cols.get(7).text();
 
@@ -306,6 +383,7 @@ public class ScheduleScraper {
                             // days
                             if (cols.get(6).text().equals("(ARR)")
                                     || cols.get(6).text().equals("TBA")) {
+
                                 // if days are tba or ARR (MOST LIKELY ONLINE CLASS!!!)
                                 schedule.setCourseInDays(course, "AnyDay");
                             }
@@ -316,37 +394,30 @@ public class ScheduleScraper {
                             }
                         }
                     }
-                }
-                else {
 
-                    Cas.logout();
-                    Log.i(TAG, "Retrieve schedule, no IDMSESSID cookie failure");
-                    return false;
+                    return true;
                 }
 
-                Cas.logout();
-                Log.i(TAG, "Retrieve schedule SUCCESS");
-                return true;
+                return false;
             }
             catch (FileNotFoundException e) {
-                Log.i(TAG, "FileNotFoundException");
                 e.printStackTrace();
+                System.out.println("FILENOTFOUNDEXCEPT");
             }
             catch (SecurityException e) {
-                Log.i(TAG, "SecurityException");
                 e.printStackTrace();
+                System.out.println("SECURITYEXCEPT");
             }
             catch (UnknownHostException e) {
-                Log.i(TAG, "UnknownHostException");
                 e.printStackTrace();
+                System.out.println("UNKNOWNHOSTEXCEPT");
             }
             catch (IOException e) {
-                Log.i(TAG, "IOException");
                 e.printStackTrace();
+                System.out.println("IOEXCEPT");
             }
         }
 
-        Log.i(TAG, "Retrieve schedule FAILURE");
         return false;
     }
 
@@ -362,52 +433,54 @@ public class ScheduleScraper {
      *            the ArrayList>Course> to fill up for the user
      * @return true if no errors, false if there are any IOExceptions
      */
-    public static boolean retrieveExamSchedule(String semesterCode,
-                                               List<Course> examList) {
+    public boolean retrieveExamSchedule(String semesterCode,
+                                        List<Course> examList) {
 
-        if (Cas.isActive()) {
+        Map<String, String> cookies = cas.getCookies();
 
-            Map<String, String> cookies = Cas.getCookies();
+        if (cas.isActive() && cookies != null && semesterCode != null && examList != null) {
 
             Course additive;
 
             try {
 
-                //covers odd case where wrong password gets through.....
-                if (cookies.get("IDMSESSID") != null) {
+                if (cookies.get("IDMSESSID") == null) {
+                    cas.closeSession();
+                    return false;
+                }
 
-                    //TODO this is where the NULL cookie error is! WTF IS CAUSING IT!?
-                    //IDMSESSID is not present....
-                    //if (cookies.get("IDMSESSID") != null) {
-                    // to get the cookies that are updated with the click
-                    Connection.Response hokieResp = Jsoup
-                            .connect(HOKIESTOP + semesterCode + ENDOFURL)
-                            .cookies(cookies)
-                            .userAgent(AGENTS)
-                            .method(Connection.Method.GET)
-                            .execute();
+                // to get the cookies that are updated with the click
+                Response hokieResp = Jsoup
+                        .connect(HOKIESTOP + semesterCode + ENDOFURL)
+                        .cookie("IDMSESSID", cookies.get("IDMSESSID"))
+                        .cookie("SESSID", cookies.get("SESSID"))
+                        .userAgent(AGENTS)
+                        .method(Method.GET)
+                        .execute();
 
-                    cookies.put("SESSID", hokieResp.cookies().get("SESSID"));
+                cookies.put("SESSID", hokieResp.cookies().get("SESSID"));
 
-                    // go to the detailed schedule page
-                    Document hokieDoc = Jsoup
-                            .connect(HOKIESPA + semesterCode + PRINT_FRIENDLY)
-                            .cookies(cookies)
-                            .userAgent(AGENTS)
-                            .referrer(HOKIESTOP + semesterCode + ENDOFURL)
-                            .post();
+                // go to the detailed schedule page
+                Document hokieDoc = Jsoup
+                        .connect(HOKIESPA + semesterCode + PRINT_FRIENDLY)
+                        .cookie("IDMSESSID", cookies.get("IDMSESSID"))
+                        .cookie("SESSID", cookies.get("SESSID")).userAgent(AGENTS)
+                        .referrer(HOKIESTOP + semesterCode + ENDOFURL)
+                        .post();
 
-                    // the Elements that will get down to the needed fields
-                    Elements table = hokieDoc.select("body table");
+                // the Elements that will get down to the needed fields
+                Elements table = hokieDoc.select("body table");
+                if (table.size() > 1) {
+
                     Elements rows = table.get(1).select("tr");
                     Elements cols;
 
                     // the strings that will be used to construct the url for the pages
                     // holding the exam information
-                    String name;
                     String crn;
                     String[] course;
                     String examID;
+                    String name;
 
                     // the first 2 rows hold formatting information
                     // therefore course information stats in the 3rd row (2)
@@ -433,7 +506,7 @@ public class ScheduleScraper {
 
                                 // get the course from the retrieveExamTimes method
                                 additive = retrieveExamTimes(name, crn, course[0], course[1],
-                                        semesterCode, examID);
+                                        semesterCode, examID, cookies);
 
                                 // check for null course
                                 if (additive != null) {
@@ -443,26 +516,14 @@ public class ScheduleScraper {
                         }
                     }
 
-                    Log.i(TAG, "Retrieve exam schedule SUCCESS");
                     return true;
-                }
-                else {
-
-                    Cas.logout();
-                    Log.i(TAG, "Retrieve exam schedule, no IDMSESSID cookie failure");
-                    return false;
                 }
             }
             catch (IOException e) {
-
                 e.printStackTrace();
-
-                Log.i(TAG, "Retrieve exam schedule IOException failure");
-                return false;
             }
         }
 
-        Log.i(TAG, "Retrieve exam schedule general failure");
         return false;
     }
 
@@ -473,6 +534,8 @@ public class ScheduleScraper {
      * Returns a course object that holds the information needed to display and
      * sort it. In particular the Course object has a Date object.
      *
+     * @param name
+     *            the name of the course.
      * @param crn
      *            course's CRN.
      * @param courseID
@@ -487,16 +550,18 @@ public class ScheduleScraper {
      * @return course a course object representing the exam date, time, name.
      *            Null if there are any errors.
      */
-    public static Course retrieveExamTimes(String name, String crn, String courseID,
-                                           String courseNum, String semesterCode, String examID) {
+    public Course retrieveExamTimes(String name, String crn, String courseID,
+                                    String courseNum, String semesterCode, String examID,
+                                    Map<String, String> cookies) {
 
-        if (Cas.getCookies() != null) {
+        if (cookies != null && name != null && crn != null
+                && courseID != null && courseNum != null
+                && semesterCode != null && examID != null) {
 
-            Map<String, String> cookies = Cas.getCookies();
             Course course;
 
             try {
-                //for some reason hokiespa uses theXXX for CTE..in the url
+                //for some reason hokiespa uses XXX for CTE..in the url
                 if (examID.equalsIgnoreCase("CTE")) {
 
                     examID = "XXX";
@@ -509,9 +574,9 @@ public class ScheduleScraper {
                                         + semesterCode.substring(4, 6) + BEFORE_YEAR
                                         + semesterCode.substring(0, 4)
                                         + BEFORE_EXAMNUM + examID)
-                        .cookies(cookies)
-                        .referrer(HOKIESTOP + semesterCode + ENDOFURL)
-                        .get();
+                        .cookie("IDMSESSID", cookies.get("IDMSESSID"))
+                        .cookie("SESSID", cookies.get("SESSID"))
+                        .referrer(HOKIESTOP + semesterCode + ENDOFURL).get();
 
                 Elements rows = examDoc.select("body table tr");
 
@@ -534,5 +599,13 @@ public class ScheduleScraper {
         }
 
         return null;
+    }
+
+    /**
+     * Closes the CAS session stored within this class.
+     * @return true if successful, false if an error occurred.
+     */
+    public boolean closeSession() {
+        return cas.closeSession();
     }
 }

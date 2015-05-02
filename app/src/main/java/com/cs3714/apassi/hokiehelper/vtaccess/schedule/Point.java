@@ -1,23 +1,22 @@
-package com.cs3714.apassi.hokiehelper.schedule;
+package com.cs3714.apassi.hokiehelper.vtaccess.schedule;
 
-import android.os.Parcel;
-import android.os.Parcelable;
+import java.io.Serializable;
 
 /**
- * represents a point on the x,y plane, has x and y int objects, and getters and setters
- *
+ * Represents a point on the x,y plane, has x and y int objects, and getters and setters
+ * 
  * also has toString and equals methods for printing and testing purposes
- *
+ * 
  * @author ethan
  */
-public class Point implements Parcelable {
+public class Point implements Serializable{
 
     //~DataFields-------------------------------------------------------------
     /**
      * x coordinate of the point
      */
     public int x;
-
+    
     /**
      * y coordinate of the point
      */
@@ -28,18 +27,18 @@ public class Point implements Parcelable {
      * default constructor that doesnt initialize anything
      */
     public Point() {
-
+        
     }
-
+    
     /**
      * initializes the x,y cords to passed in values
      */
     public Point (int newX, int newY) {
-
+        
         setX(newX);
         setY(newY);
     }
-
+    
     //~Methods----------------------------------------------------------------
     /**
      * @param x the x to set
@@ -72,7 +71,7 @@ public class Point implements Parcelable {
 
         return y;
     }
-
+    
     /**
      * determines if one point object is equal to another
      * @param thing the point object to compare this one to
@@ -80,72 +79,31 @@ public class Point implements Parcelable {
      */
     @Override
     public boolean equals(Object thing) {
-
+        
         boolean value = false;
-
+        
         if (thing != null) {
-
+            
             if (thing instanceof Point) {
-
+                
                 if (((Point) thing).getX() == this.x && ((Point) thing).getY() == this.y) {
-
+                   
                     value = true;
                 }
             }
         }
-
+        
         return value;
     }
-
+    
     /**
      * returns the x,y cords in the format (x, y)
-     *
+     * 
      * @return the xy cords in this format -- (x, y)
      */
     @Override
     public String toString() {
-
+        
         return x + " " + y;
     }
-
-    // ~PARCELABLE
-    // STUFF----------------------------------------------------------------------
-    // ~----------------------------------------------------------------------------------------
-
-    public int describeContents() {
-
-        return 0;
-    }
-
-    public void writeToParcel(Parcel dest, int flags) {
-
-        dest.writeInt(x);
-        dest.writeInt(y);
-    }
-
-    /**
-     * used to regenerate the Schedule upon receiving it
-     */
-    public static final Parcelable.Creator<Point> CREATOR = new Parcelable.Creator<Point>() {
-
-        public Point createFromParcel(Parcel in) {
-
-            return new Point(in);
-        }
-
-        public Point[] newArray(int size) {
-
-            return new Point[size];
-        }
-    };
-
-    // example constructor that takes a Parcel and gives you an object populated
-    // with it's values
-    private Point(Parcel in) {
-
-        x = in.readInt();
-        y = in.readInt();
-    }
-
-    // ~----------------------------------------------------------------------------------------
 }

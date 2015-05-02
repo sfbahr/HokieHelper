@@ -1,32 +1,27 @@
-package com.cs3714.apassi.hokiehelper.schedule;
-
-import android.os.Parcel;
-import android.os.Parcelable;
+package com.cs3714.apassi.hokiehelper.vtaccess.schedule;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
- * Contains an ArrayList of courses that represent a student's course-load for
- * any given day
- *
- * an arraylist is used to ease the passing of values into the ListView in the
- * activity
- *
+ * Contains an ArrayList of Courses that represent a student's course-load for
+ * any given day.
+ * 
  * @author Ethan Gaebel(egaebel)
- *
+ * 
  */
-public class Day implements Parcelable {
+public class Day {
 
     // ~Data Fields------------------------------------------------------------
     /**
      * holds a list of Courses in a given day
      */
-    private ArrayList<Course> daily;
+    protected List<Course> daily;
 
     /**
      * the String designating what day of the week this day is
      */
-    private String thisDay;
+    protected String thisDay;
 
     // ~Constructors------------------------------------------------------------
     /**
@@ -40,40 +35,62 @@ public class Day implements Parcelable {
 
     // ~Methods------------------------------------------------------------
     /**
-     * adds a course to the day's arrayList
+     * Adds a course to the Day's List
+     * 
+     * @param name the name of the Course.
+     * @param teacherName the name of the teacher of the Course.
+     * @param beginTime the time that the Course begins at.
+     * @param endTime the time that the Course ends at.
+     * @param building the building name that this Course is in.
+     * @param room the room number that this Course is in.
      */
-    public void addCourse(String name, String subjectCode, String courseNumber, String teacherName, String beginTime,
-                          String endTime, String building, String room) {
+    public void addCourse(String name, String teacherName, String beginTime,
+            String endTime, String building, String room) {
 
-        Course addingCourse = new Course(name, subjectCode, courseNumber, teacherName, beginTime, endTime,
+        Course addingCourse = new Course(name, teacherName, beginTime, endTime,
                 building, room);
 
         daily.add(addingCourse);
     }
 
-    /**
-     * Takes in the passed newCourse Course object and adds it to the appropriate position amongst the other courses, sorted by begin time.
-     *
-     * @param newCourse the Course to add to this Day to maintain a sort.
-     */
-    public void addCourseInSort(Course newCourse) {
 
-        int insertionIndex = 0;
-        for (int i = 0; i < daily.size(); i++, insertionIndex++) {
+    public void addCourse(String crn, String name, String subjectCode, String courseNumber, String credits, String capacity, String teacherName, String beginTime, String endTime, String building, String room, String days) {
 
-            if (newCourse.getCoursePoint().getX() <= daily.get(i).getCoursePoint().getX()) {
-
-                daily.add(insertionIndex, newCourse);
-                break;
-            }
+        int numCredits;
+        int numStudents;
+        
+        //Convert the credits to an int, or 0 by default
+        if (isNumber(credits)) {
+            
+            numCredits = Integer.parseInt(credits);
         }
-    }
+        else {
+            
+            numCredits = 0;
+        }
+        
+        //Convert capacity to an int, or 0 by default
+        if (isNumber(capacity)) {
+            
+            numStudents = Integer.parseInt(capacity);
+        }
+        else {
+            
+            numStudents = 0;
+        }
+        
+        Course addingCourse = new Course(crn, name, subjectCode, courseNumber, 
+                numCredits, numStudents, teacherName, beginTime, endTime,
+                building, room);
 
+        daily.add(addingCourse);
+    }
+    
     /**
-     * adds the passed course to this object's daily course list
-     *
+     * Adds the passed course to this object's daily course list.
+     * 
      * @param newCourse
-     *            the course to add to the daily list
+     *            the course to add to the daily list.
      */
     public void addCourse(Course newCourse) {
 
@@ -81,8 +98,8 @@ public class Day implements Parcelable {
     }
 
     /**
-     * removes the passed in course from the arraylist
-     *
+     * Removes the passed in course from the ArrayList
+     * 
      * @param remove
      *            course to be removed
      */
@@ -94,53 +111,53 @@ public class Day implements Parcelable {
     /**
      * Checks to see if the daily course list has any members in it.
      * Returns true if there are courses, false if there are none.
-     *
+     * 
      * @return true if there are courses, false if there aren't.
      */
     public boolean hasCourses() {
-
+        
         return !daily.isEmpty();
     }
-
+    
     /**
-     * gets the course of a specified index
-     *
+     * Gets the Course at a specified index.
+     * 
      * @param index
-     *            the index of the course to get
-     * @return the course at the specified index
+     *            the index of the Course to get.
+     * @return the Course at the specified index, or null if the index is invalid.
      */
     public Course getCourse(int index) {
 
-        if (daily.size() > index) {
-
+        if (daily.size() > index && index >= 0) {
+            
             return daily.get(index);
         }
-
+        
         return null;
-
+        
     }
 
     /**
-     * performs an insertion sort. Sorted by start time on the ArrayList<Course>
+     * Performs an insertion sort. Sorted by start time on the ArrayList<Course>.
      */
     public void sortCourses() {
 
         Course course = null;
         int j = 0;
         for (int i = 1; i < size(); i++) {
-
-            j = i;
+            
+            j = i; 
             //checks to see if the start time of the element j is less than the previous element, and if j > 0
             while (j > 0) {
-
+                
                 if ((daily.get(j).getCoursePoint().getX() < daily.get(j - 1).getCoursePoint().getX())) {
-
+                
                     //if so, swap the two
                     course = daily.get(j);
                     daily.set(j, daily.get(j - 1));
                     daily.set(j - 1, course);
                 }
-
+                
                 //decrement j
                 j--;
             }
@@ -148,53 +165,52 @@ public class Day implements Parcelable {
     }
 
     /**
-     * setter method for the daily arrayList of courses
-     *
+     * Setter method for the daily List of courses.
+     * 
      * @param theList
-     *            the ArrayList<Course> to set daily equal to
+     *            the ArrayList<Course> to set daily equal to.
      */
-    public void setList(ArrayList<Course> theList) {
+    public void setList(List<Course> theList) {
 
         daily = new ArrayList<Course>(theList);
     }
 
     /**
-     * getter method for the daily ArrayList of courses
-     *
-     * @return daily the arrayList with the courses of the day
+     * Getter method for the daily ArrayList of courses.
+     * 
+     * @return daily the arrayList with the courses of the day.
      */
-    public ArrayList<Course> getList() {
+    public List<Course> getList() {
 
         return daily;
     }
 
-
     /**
-     * sets the thisDay object which designated what day this Day object
-     * represents
-     *
+     * Sets the thisDay object which designated what day this Day object
+     * represents.
+     * 
      * @param thisDay
-     *            the String designating which day of the week thisDay is
+     *            the String designating which day of the week thisDay is.
      */
     public void setThisDay(String thisDay) {
 
         this.thisDay = thisDay;
     }
-
+    
     /**
-     * Getter method for the thisDay String which identifies the name of
-     * the Day. (ex. Monday, tuesday etc)
-     * @return thisDay the name of this day
+     * Getter method for the thisDay String which identifies the name of 
+     * the Day. (e.g. Monday, Tuesday etc.).
+     * @return thisDay the name of this day.
      */
     public String getThisDay() {
-
+        
         return thisDay;
     }
 
     /**
-     * tells what day of the week this day object represents
-     *
-     * @return thisDay the String representing this day
+     * Tells what day of the week this day object represents. 
+     * 
+     * @return thisDay the String representing this day.
      */
     @Override
     public String toString() {
@@ -203,7 +219,8 @@ public class Day implements Parcelable {
     }
 
     /**
-     * returns the size of the daily arrayList
+     * Returns the size of the daily arrayList.
+     * @return the size of the Course List.
      */
     public int size() {
 
@@ -211,7 +228,9 @@ public class Day implements Parcelable {
     }
 
     /**
-     * toString method for Day object
+     * toXML method for the Day object.
+     * 
+     * <"THISDAY"><Course>.....</Course></"THISDAY">
      */
     public String toXML() {
 
@@ -230,12 +249,12 @@ public class Day implements Parcelable {
     }
 
     /**
-     * compares this day object to a passed in day object, returns an ArrayList
-     * of all of the Courses that the two days share
-     *
+     * Compares this day object to a passed in day object, returns an ArrayList
+     * of all of the Courses that the two days share.
+     * 
      * @param other
-     *            the passed in day to compare this day to
-     * @return shared the ArrayList of courses the two days have in common
+     *            the passed in day to compare this day to.
+     * @return shared the ArrayList of courses the two days have in common.
      */
     public Day compareDays(Day other) {
 
@@ -271,34 +290,12 @@ public class Day implements Parcelable {
     }
 
     /**
-     * Finds the blocks of free time between the courses in this Day.
-     *
-     * @return freeTime a Day object which holds courses representing
-     *          free time slots.
+     * Equals method for Day, takes in a Day object and checks to see if it 
+     * is equal to this Day object.
+     * 
+     * @param other the other Day object.
+     * @return true if the Days are equal, false otherwise.
      */
-    public Day findFreeTime() {
-
-        Day freeTime = new Day(this.getThisDay());
-
-        Course prev = new Course("Free Time", "8:00 AM", "8:00 AM");
-        //Loop over all courses and find the breaks between them.
-        for (Course course : daily) {
-
-            //If next thing DOESNT begin at the same time the previous ends
-            if (!prev.getEndTime().equals(course.getBeginTime())) {
-
-                //Create a new Course object spanning the time between the two courses, add to freeTime day
-                freeTime.addCourse(new Course("Free Time", prev.getEndTime(), course.getBeginTime()));
-            }
-
-            prev = course;
-        }
-        //add a free time chunk going from the end of the last course, to 10pm
-        freeTime.addCourse(new Course("Free Time", prev.getEndTime(), "10:00 PM"));
-
-        return freeTime;
-    }
-
     @Override
     public boolean equals(Object other) {
 
@@ -365,47 +362,51 @@ public class Day implements Parcelable {
 
         return value;
     }
-
-    // ~PARCELABLE
-    // STUFF----------------------------------------------------------------------
-    // ~----------------------------------------------------------------------------------------
-
-    public int describeContents() {
-
-        return 0;
-    }
-
-    public void writeToParcel(Parcel dest, int flags) {
-
-        dest.writeList(daily);
-        dest.writeString(thisDay);
-    }
-
+    
     /**
-     * used to regenerate the Schedule upon receiving it
+     * Tests a char to see if it is safe to convert into an int.
+     * 
+     * @param character the char to test.
+     * @return true if the char is a number, false otherwise.
      */
-    public static final Parcelable.Creator<Day> CREATOR = new Parcelable.Creator<Day>() {
+    protected static final boolean isNumber(char character) {
 
-        public Day createFromParcel(Parcel in) {
+        boolean value;
 
-            return new Day(in);
+        String tester = String.valueOf(character);
+
+        if (tester.contains("0") || tester.contains("1")
+                || tester.contains("2") || tester.contains("3")
+                || tester.contains("4") || tester.contains("5")
+                || tester.contains("6") || tester.contains("7")
+                || tester.contains("8") || tester.contains("9")) {
+
+            value = true;
+        }
+        else {
+
+            value = false;
         }
 
-        public Day[] newArray(int size) {
-
-            return new Day[size];
-        }
-    };
-
-    // example constructor that takes a Parcel and gives you an object populated
-    // with it's values
-    private Day(Parcel in) {
-
-        daily = new ArrayList<Course>();
-
-        in.readList(daily, Course.class.getClassLoader());
-        thisDay = in.readString();
+        return value;
     }
-    // ~----------------------------------------------------------------------------------------
-
+    
+    /**
+     * Tests a string to see if it is safe to convert to an int.
+     * 
+     * @param str string to check.
+     * @return true if string is all numeric, false otherwise.
+     */
+    protected static final boolean isNumber(String str) {
+        
+        for (int i = 0; i < str.length(); i++) {
+            
+            if (!isNumber(str.charAt(i))) {
+                
+                return false;
+            }
+        }
+        
+        return true;
+    }
 }

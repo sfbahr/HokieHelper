@@ -1,6 +1,7 @@
 package com.cs3714.apassi.hokiehelper;
 
 import android.app.Activity;
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
@@ -16,18 +17,35 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import com.cs3714.apassi.hokiehelper.vtaccess.schedule.*;
 import com.cs3714.apassi.hokiehelper.vtaccess.Cas;
-import com.cs3714.apassi.hokiehelper.vtaccess.WrongLoginException;
+import com.cs3714.apassi.hokiehelper.vtaccess.ScheduleScraper;
+import com.cs3714.apassi.hokiehelper.vtaccess.exceptions.WrongLoginException;
+import com.cs3714.apassi.hokiehelper.vtaccess.exceptions.HokieSpaTimeoutException;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.ObjectOutputStream;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.List;
 
 
 public class LogInActivity extends ActionBarActivity {
     private static final int REQUEST_CODE = 1;
     private EditText pidText;
     private EditText passwordText;
+
+    /** Reference to the file name */
+    public static final String classFileName = "classes.txt";
+
+    /** Reference to the file name */
+    public static final String examsFileName = "exams.txt";
+
+    ProgressDialog progress;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,9 +75,10 @@ public class LogInActivity extends ActionBarActivity {
     }
 
     public void onClickLogin(View view) {
+        progress = ProgressDialog.show(LogInActivity.this, "Loading Schedule", "loading...", true);
         new LoginTask().execute(pidText.getText().toString(),
                 passwordText.getText().toString(),
-                new File(getCacheDir(), "ssl").toString());
+                new File(getFilesDir(), "ssl").toString());
     }
 
     private void setUpLogInButton() {
@@ -92,25 +111,85 @@ public class LogInActivity extends ActionBarActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    private class LoginTask extends AsyncTask<String, Integer, Boolean> {
+    private class LoginTask extends AsyncTask<String, Integer, ArrayList<Course>> {
         @Override
-        protected Boolean doInBackground(String... params) {
-            boolean success = false;
+        protected ArrayList<Course> doInBackground(String... params) {
             try {
-                success = Cas.login(params[0], params[1], params[2]);
+                Cas cas = new Cas(params[0].toCharArray(), params[1].toCharArray(), params[2]);
+
+                ScheduleScraper s = new ScheduleScraper(cas);
+                Schedule schedule = new Schedule();
+                String semester = "201501";
+                s.retrieveSchedule(schedule, semester);
+                ArrayList<Course> c = new ArrayList<Course>();
+                s.retrieveExamSchedule(semester, c);
+                Log.d("Schedule", "Save: " + save(schedule.getAllCourses()));
+                saveExams(c);
+                return schedule.getAllCourses();
+
+            } catch (HokieSpaTimeoutException e) {
+                e.printStackTrace();
             } catch (WrongLoginException e) {
                 e.printStackTrace();
-                return false;
             }
-            return success;
+            return new ArrayList<Course>();
         }
 
         @Override
-        protected void onPostExecute(Boolean success) {
-            if (success) {
-                Toast.makeText(LogInActivity.this, "Login succeeded", Toast.LENGTH_SHORT).show();
-            } else {
+        protected void onPostExecute(ArrayList<Course> course) {
+            progress.dismiss();
+            if (course.size() <= 0) {
                 Toast.makeText(LogInActivity.this, "Login failed", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            Intent intent = new Intent(LogInActivity.this, ClassActivity.class);
+            startActivity(intent);
+        }
+
+        /**
+         * Method to save the current in memory data structure
+         * that contains all the password entries to "pwman.dat" file.
+         */
+        public boolean save(List<Course> courses){
+            File file = new File(getFilesDir(), classFileName);
+            file.delete();
+
+            try {
+                FileOutputStream outputFileStream = new FileOutputStream(file);
+                ObjectOutputStream outputObjectStream = new ObjectOutputStream(outputFileStream);
+
+                for(int i = 0; i < courses.size(); i++)
+                    outputObjectStream.writeObject(courses.get(i));
+                outputObjectStream.close();
+                return true;
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+                return false;
+            } catch (IOException e) {
+                e.printStackTrace();
+                return false;
+            }
+        }
+
+        public boolean saveExams(List<Course> exams) {
+
+            File file = new File(getFilesDir(), examsFileName);
+            file.delete();
+
+            try {
+                FileOutputStream outputFileStream = new FileOutputStream(file);
+                ObjectOutputStream outputObjectStream = new ObjectOutputStream(outputFileStream);
+
+                for(int i = 0; i < exams.size(); i++)
+                    outputObjectStream.writeObject(exams.get(i));
+                outputObjectStream.close();
+                return true;
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+                return false;
+            } catch (IOException e) {
+                e.printStackTrace();
+                return false;
             }
         }
     }

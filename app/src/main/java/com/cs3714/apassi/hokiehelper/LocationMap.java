@@ -70,6 +70,7 @@ public class LocationMap {
         buildings.put("SHULTZ", new LatLng( (37.231801 ),  (-80.418714 )));
         buildings.put("SMYTH", new LatLng( (37.224932 ),  (-80.422911 )));
         buildings.put("SQUIR", new LatLng( (37.229455 ),  (-80.417589 )));
+        buildings.put("SQUIR COLNL", new LatLng( (37.229455 ),  (-80.417589 )));
 
         buildings.put("WMS", new LatLng( (37.227824 ),  (-80.424234 )));
     }
