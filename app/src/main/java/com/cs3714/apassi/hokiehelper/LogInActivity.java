@@ -90,10 +90,82 @@ public class LogInActivity extends ActionBarActivity {
 //                        Uri.parse("http://maps.google.com/maps?saddr=37.2286,-80.41629&daddr=37.221606,-80.423771"));
 //                startActivityForResult(intent, REQUEST_CODE);
 
+                populateExams();
                 Intent intent = new Intent(LogInActivity.this , ClassActivity.class);
                 startActivity(intent);
             }
         });
+    }
+
+    private void populateExams() {
+
+        List<Course> courses = new ArrayList<Course>();
+
+        Course c = new Course("19943", "3771", "Fine Arts",
+                3, 35, "Teacher", "M W", "8:00am", "9:00am", "SQUIR 343");
+
+        courses.add(c);
+
+        c = new Course("19943", "3771", "Intro To Unix",
+                3, 35, "Teacher", "T TR", "8:00am", "9:00am", "DURHM 23");
+
+        courses.add(c);
+
+        c = new Course("19943", "3771", "Data Structures",
+                3, 35, "Teacher", "M W", "10:00am", "11:00am", "ENGEL 23");
+
+        courses.add(c);
+
+        c = new Course("19943", "3771", "Physics",
+                3, 35, "Teacher", "T TR", "2:00pm", "3:00pm", "ROB 23");
+
+        courses.add(c);
+
+        save(courses);
+        saveExams(courses);
+    }
+
+    public boolean save(List<Course> courses){
+        File file = new File(getFilesDir(), classFileName);
+        file.delete();
+
+        try {
+            FileOutputStream outputFileStream = new FileOutputStream(file);
+            ObjectOutputStream outputObjectStream = new ObjectOutputStream(outputFileStream);
+
+            for(int i = 0; i < courses.size(); i++)
+                outputObjectStream.writeObject(courses.get(i));
+            outputObjectStream.close();
+            return true;
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+            return false;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean saveExams(List<Course> exams) {
+
+        File file = new File(getFilesDir(), examsFileName);
+        file.delete();
+
+        try {
+            FileOutputStream outputFileStream = new FileOutputStream(file);
+            ObjectOutputStream outputObjectStream = new ObjectOutputStream(outputFileStream);
+
+            for(int i = 0; i < exams.size(); i++)
+                outputObjectStream.writeObject(exams.get(i));
+            outputObjectStream.close();
+            return true;
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+            return false;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 
     @Override

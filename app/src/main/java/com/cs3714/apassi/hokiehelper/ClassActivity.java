@@ -9,8 +9,10 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.SystemClock;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -32,6 +34,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 
 public class ClassActivity extends ActionBarActivity implements LocationListener{
@@ -40,10 +43,13 @@ public class ClassActivity extends ActionBarActivity implements LocationListener
 
     LocationManager locationManager;
     String locationProvider = LocationManager.NETWORK_PROVIDER;
-    private double curLat, curLong = 0;
+    private double curLat = 37.230311;
+    private double curLong = -80.421771;
 
     ProgressDialog progress;
+    private String TAG = "ClassActivity";
 
+    private static final UUID WATCHAPP_UUID = UUID.fromString("6092637b-8f58-4199-94d8-c606b1e45040");
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -211,7 +217,6 @@ public class ClassActivity extends ActionBarActivity implements LocationListener
     }
 
     private class NavigateTask extends AsyncTask<LatLng, Integer, ArrayList<String>> {
-
         @Override
         protected ArrayList<String> doInBackground(LatLng... params) {
             try {
@@ -226,6 +231,29 @@ public class ClassActivity extends ActionBarActivity implements LocationListener
                 list.add(2, String.valueOf(dest.latitude));
                 list.add(3, String.valueOf(dest.longitude));
 
+                ArrayList<String> copy = (ArrayList<String>) list.clone();
+                copy.remove(0);
+                copy.remove(0);
+                copy.remove(0);
+                copy.remove(0);
+
+                PebbleDictionary out2 = new PebbleDictionary();
+                out2.addInt32(7, copy.size());
+                PebbleKit.sendDataToPebble(getApplicationContext(), WATCHAPP_UUID, out2);
+                SystemClock.sleep(1500);
+
+                for(String str1: copy) {
+                    Log.d(TAG, "Sending Directions...");
+                    PebbleDictionary out = new PebbleDictionary();
+                    out.addString(6, str1);
+                    PebbleKit.sendDataToPebble(getApplicationContext(), WATCHAPP_UUID, out);
+                    SystemClock.sleep(1500);
+                }
+                PebbleDictionary out = new PebbleDictionary();
+                SystemClock.sleep(1500);
+                out.addString(1, "nothing");
+                PebbleKit.sendDataToPebble(getApplicationContext(), WATCHAPP_UUID, out);
+
                 return list;
 
             } catch (Exception e) {
@@ -237,10 +265,36 @@ public class ClassActivity extends ActionBarActivity implements LocationListener
         @Override
         protected void onPostExecute(ArrayList<String> directions) {
 
+            if (directions == null || directions.size() < 4) {
+                Toast.makeText(ClassActivity.this, "GPS not working", Toast.LENGTH_SHORT).show();
+                return;
+            }
             String sLat = directions.get(0);
             String sLon = directions.get(1);
             String dLat = directions.get(2);
             String dLon = directions.get(3);
+
+//            directions.remove(0);
+//            directions.remove(0);
+//            directions.remove(0);
+//            directions.remove(0);
+//
+//            PebbleDictionary out2 = new PebbleDictionary();
+//            out2.addInt32(7, directions.size());
+//            PebbleKit.sendDataToPebble(getApplicationContext(), WATCHAPP_UUID, out2);
+//            SystemClock.sleep(1000);
+//
+//            for(String str1: directions) {
+//                Log.d(TAG, "Sending Directions...");
+//                PebbleDictionary out = new PebbleDictionary();
+//                out.addString(6, str1);
+//                PebbleKit.sendDataToPebble(getApplicationContext(), WATCHAPP_UUID, out);
+//                SystemClock.sleep(1000);
+//            }
+//            PebbleDictionary out = new PebbleDictionary();
+//            SystemClock.sleep(1000);
+//            out.addString(1, "nothing");
+//            PebbleKit.sendDataToPebble(getApplicationContext(), WATCHAPP_UUID, out);
 
             progress.dismiss();
 

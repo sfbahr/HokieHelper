@@ -23,6 +23,7 @@ public class LocationMap {
 
         buildings.put("RAND", new LatLng( (37.230499 ),  (-80.42338 )));
         buildings.put("HOLD", new LatLng( (37.230132 ),  (-80.422069 )));
+        buildings.put("HOLD AUD", new LatLng( (37.230132 ),  (-80.422069 )));
         buildings.put("NOR", new LatLng( (37.229483 ),  (-80.423196 )));
 
         buildings.put("HAN", new LatLng( (37.230098 ),  (-80.424044 )));

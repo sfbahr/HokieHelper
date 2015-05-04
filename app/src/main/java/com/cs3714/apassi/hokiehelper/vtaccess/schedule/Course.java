@@ -214,8 +214,8 @@ public class Course implements Parcelable, Serializable {
         setDays(days);
         
         String[] temp = splitCourseCode(courseCode);
-        setSubjectCode(temp[0]);
-        setCourseNumber(temp[1]);
+//        setSubjectCode(temp[0]);
+//        setCourseNumber(temp[1]);
         
         this.credits = credits;
         classSize = capacity;
