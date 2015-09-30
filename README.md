@@ -1,4 +1,5 @@
 # HokieHelper
+# Authors: Arjun Passi, Fernando Oliveros, Samuel Bahr
 CS 3714 Group Project
 
 **Project Proposal:**
